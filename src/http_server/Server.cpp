@@ -3,13 +3,17 @@
 #include <iostream>
 #include <sys/wait.h>
 
+#include "http_server/Session.h"
+
 using namespace std;
 
-Server::Server(boost::asio::io_context& io_context, int port)
-    : _signal(io_context, SIGCHLD),
-      _acceptor(io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
-      _socket(io_context)
+Server::Server(shared_ptr<boost::asio::io_context> io_context, int port)
+    : _signal(*io_context, SIGCHLD),
+      _acceptor(*io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+      _socket(*io_context)
 {
+    this->_io_context = shared_ptr<boost::asio::io_context>(io_context);
+
     this->do_wait();
     this->do_accept();
 }
@@ -41,7 +45,7 @@ void Server::do_accept()
         if (!this->_acceptor.is_open()) return;
 
         if (!error_code) {
-            cout << "hi" << '\n';
+            // TODO
         }
         else {
             cerr << "Accept error: " << error_code.message() << '\n';

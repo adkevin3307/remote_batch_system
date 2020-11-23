@@ -28,7 +28,7 @@ bool Parser::is_method(string s)
     return (find(methods.begin(), methods.end(), s_copy) != methods.end());
 }
 
-map<CONSTANT::REQUEST_HEADER, string> Parser::parse(boost::asio::ip::tcp::socket socket, string s)
+map<CONSTANT::REQUEST_HEADER, string> Parser::parse(boost::asio::ip::tcp::socket& socket, string s)
 {
     boost::trim(s);
 

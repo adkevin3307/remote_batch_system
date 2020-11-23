@@ -15,11 +15,11 @@ int main(int argc, char** argv)
     }
 
     try {
-        boost::asio::io_context io_context;
+        shared_ptr<boost::asio::io_context> io_context(new boost::asio::io_context);
 
         Server server(io_context, atoi(argv[1]));
 
-        io_context.run();
+        (*io_context).run();
     }
     catch (exception& error) {
         cerr << "Exception: " << error.what() << '\n';

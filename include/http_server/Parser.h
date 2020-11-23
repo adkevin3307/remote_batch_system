@@ -16,5 +16,5 @@ public:
     Parser();
     ~Parser();
 
-    map<CONSTANT::REQUEST_HEADER, string> parse(boost::asio::ip::tcp::socket socket, string s);
+    map<CONSTANT::REQUEST_HEADER, string> parse(boost::asio::ip::tcp::socket& socket, string s);
 };

@@ -6,6 +6,7 @@ using namespace std;
 
 class Server {
 private:
+    shared_ptr<boost::asio::io_context> _io_context;
     boost::asio::signal_set _signal;
     boost::asio::ip::tcp::acceptor _acceptor;
     boost::asio::ip::tcp::socket _socket;
@@ -14,6 +15,6 @@ private:
     void do_accept();
 
 public:
-    Server(boost::asio::io_context& io_context, int port);
+    Server(shared_ptr<boost::asio::io_context> io_context, int port);
     ~Server();
 };
