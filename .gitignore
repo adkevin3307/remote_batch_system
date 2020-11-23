@@ -1,0 +1,4 @@
+bin/
+test_case/
+*.cgi
+np_single_golden
