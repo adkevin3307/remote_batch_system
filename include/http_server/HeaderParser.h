@@ -8,13 +8,13 @@
 
 using namespace std;
 
-class Parser {
+class HeaderParser {
 private:
     bool is_method(string s);
 
 public:
-    Parser();
-    ~Parser();
+    HeaderParser();
+    ~HeaderParser();
 
     map<CONSTANT::REQUEST_HEADER, string> parse(boost::asio::ip::tcp::socket& socket, string s);
 };

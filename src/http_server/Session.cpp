@@ -26,7 +26,7 @@ void Session::do_read()
     auto handle_buffer = boost::asio::buffer(this->_buffer, this->_buffer.size());
     this->_socket.async_read_some(handle_buffer, [this, self](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
-            this->header = this->parser.parse(this->_socket, this->_buffer.data());
+            this->header = this->header_parser.parse(this->_socket, this->_buffer.data());
 
             if (!this->header.empty()) {
                 this->handle_request();

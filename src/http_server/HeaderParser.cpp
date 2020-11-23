@@ -1,4 +1,4 @@
-#include "http_server/Parser.h"
+#include "http_server/HeaderParser.h"
 
 #include <vector>
 #include <sstream>
@@ -12,15 +12,15 @@
 
 using namespace std;
 
-Parser::Parser()
+HeaderParser::HeaderParser()
 {
 }
 
-Parser::~Parser()
+HeaderParser::~HeaderParser()
 {
 }
 
-bool Parser::is_method(string s)
+bool HeaderParser::is_method(string s)
 {
     vector<string> methods{ "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH" };
 
@@ -29,7 +29,7 @@ bool Parser::is_method(string s)
     return (find(methods.begin(), methods.end(), s_copy) != methods.end());
 }
 
-map<CONSTANT::REQUEST_HEADER, string> Parser::parse(boost::asio::ip::tcp::socket& socket, string s)
+map<CONSTANT::REQUEST_HEADER, string> HeaderParser::parse(boost::asio::ip::tcp::socket& socket, string s)
 {
     boost::trim(s);
     map<CONSTANT::REQUEST_HEADER, string> result;
