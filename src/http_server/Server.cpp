@@ -45,7 +45,7 @@ void Server::do_accept()
         if (!this->_acceptor.is_open()) return;
 
         if (!error_code) {
-            // TODO
+            make_shared<Session>(this->_io_context, move(this->_socket))->start();
         }
         else {
             cerr << "Accept error: " << error_code.message() << '\n';

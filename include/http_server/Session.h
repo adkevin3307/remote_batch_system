@@ -10,7 +10,7 @@
 
 using namespace std;
 
-class Session : enable_shared_from_this<Session> {
+class Session : public enable_shared_from_this<Session> {
 private:
     shared_ptr<boost::asio::io_context> _io_context;
     boost::asio::ip::tcp::socket _socket;

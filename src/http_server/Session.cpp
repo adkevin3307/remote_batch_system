@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <sstream>
 #include <boost/filesystem.hpp>
 
 using namespace std;
@@ -35,6 +34,9 @@ void Session::do_read()
             
             this->do_read();
         }
+        else if (error_code != boost::asio::error::operation_aborted) {
+            this->_socket.close();
+        }
     });
 }
 
@@ -42,17 +44,19 @@ void Session::handle_request()
 {
     auto self(shared_from_this());
 
-    stringstream response_header;
+    string response_header = "";
     boost::filesystem::path exec_file = boost::filesystem::current_path() / this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI];
 
     if (boost::filesystem::is_regular_file(exec_file)) {
-        response_header << "HTTP/1.1 200 OK\r\n";
+        response_header += "HTTP/1.1 200 OK\r\n";
     }
     else {
-        response_header << "HTTP/1.1 404 Not Found\r\n" << "Content-Length: 20\r\n" << "\r\n" << "<h1>Not Found</h1>\r\n";
+        response_header += "HTTP/1.1 404 Not Found\r\n";
+        response_header += "Content-Length: 20\r\n";
+        response_header += "<h1>Not Found</h1>\r\n";
     }
 
-    auto handle_buffer = boost::asio::buffer(response_header.str(), response_header.str().length());
+    auto handle_buffer = boost::asio::buffer(response_header, response_header.length());
     this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
             setenv("REQUEST_METHOD", this->header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD].c_str(), 1);
@@ -65,27 +69,34 @@ void Session::handle_request()
             setenv("REMOTE_ADDR", this->header[CONSTANT::REQUEST_HEADER::REMOTE_ADDR].c_str(), 1);
             setenv("REMOTE_PORT", this->header[CONSTANT::REQUEST_HEADER::REMOTE_PORT].c_str(), 1);
 
-            (*(this->_io_context)).notify_fork(boost::asio::io_context::fork_prepare);
+            this->_io_context->notify_fork(boost::asio::io_context::fork_prepare);
             if (fork() == 0) {
-                (*(this->_io_context)).notify_fork(boost::asio::io_context::fork_child);
+                this->_io_context->notify_fork(boost::asio::io_context::fork_child);
 
                 int socket_fd = this->_socket.native_handle();
                 dup2(socket_fd, STDIN_FILENO);
                 dup2(socket_fd, STDOUT_FILENO);
                 dup2(socket_fd, STDERR_FILENO);
 
-                close(socket_fd);
+                this->_socket.close();
 
                 if (execlp(exec_file.c_str(), exec_file.c_str(), NULL) < 0) {
                     cout << "<h1>Execution Failed</h1>\r\n";
                 }
-
-                boost::system::error_code trash;
-                this->_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, trash);
             }
             else {
-                (*(this->_io_context)).notify_fork(boost::asio::io_context::fork_parent);
+                this->_io_context->notify_fork(boost::asio::io_context::fork_parent);
             }
+        }
+
+        if (error_code != boost::asio::error::operation_aborted) {
+            this->_socket.close();
+
+            boost::system::error_code trash;
+            this->_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, trash);
+        }
+        else {
+            cout << "Handle error: " << error_code.message() << '\n';
         }
     });
 }

@@ -1,6 +1,9 @@
 #pragma once
 
+#include <vector>
 #include <boost/asio.hpp>
+
+#include "http_server/Session.h"
 
 using namespace std;
 
