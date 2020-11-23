@@ -3,4 +3,4 @@ bin/
 test_case/
 *.cgi
 np_single_golden
-./http_server
+/http_server
