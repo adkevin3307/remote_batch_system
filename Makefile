@@ -11,7 +11,7 @@ OBJS_CONSOLE_CGI = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir 
 
 CXXFLAGS = -std=c++17 -I./include -Wall -O2
 
-LIBS = -lpthread
+LIBS = -lpthread -lboost_system -lboost_filesystem
 
 all: create_object_directory $(EXE)
 	@echo Compile Success
