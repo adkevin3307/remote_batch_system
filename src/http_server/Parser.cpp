@@ -10,7 +10,6 @@
 #include <iostream>
 
 using namespace std;
-using namespace boost;
 
 Parser::Parser()
 {
@@ -24,17 +23,17 @@ bool Parser::is_method(string s)
 {
     vector<string> methods{ "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH" };
 
-    string s_copy = to_upper_copy(s);
+    string s_copy = boost::to_upper_copy(s);
 
     return (find(methods.begin(), methods.end(), s_copy) != methods.end());
 }
 
-map<CONSTANT::REQUEST_HEADER, string> Parser::parse(asio::ip::tcp::socket socket, string s)
+map<CONSTANT::REQUEST_HEADER, string> Parser::parse(boost::asio::ip::tcp::socket socket, string s)
 {
-    trim(s);
+    boost::trim(s);
 
     vector<string> tokens;
-    split(tokens, s, is_any_of(" "), token_compress_on);
+    split(tokens, s, boost::is_any_of(" "), boost::token_compress_on);
 
     map<CONSTANT::REQUEST_HEADER, string> result;
 

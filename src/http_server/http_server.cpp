@@ -1,10 +1,10 @@
 #include <iostream>
+#include <exception>
 #include <boost/asio.hpp>
 
-#include "http_server/Parser.h"
+#include "http_server/Server.h"
 
 using namespace std;
-using namespace boost;
 
 int main(int argc, char** argv)
 {
@@ -14,5 +14,16 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    asio::io_service io_service;
+    try {
+        boost::asio::io_context io_context;
+
+        Server server(io_context, atoi(argv[1]));
+
+        io_context.run();
+    }
+    catch (exception& error) {
+        cerr << "Exception: " << error.what() << '\n';
+    }
+
+    return 0;
 }

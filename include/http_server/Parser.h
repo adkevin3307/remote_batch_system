@@ -7,7 +7,6 @@
 #include "constant.h"
 
 using namespace std;
-using namespace boost;
 
 class Parser {
 private:
@@ -17,5 +16,5 @@ public:
     Parser();
     ~Parser();
 
-    map<CONSTANT::REQUEST_HEADER, string> parse(asio::ip::tcp::socket socket, string s);
+    map<CONSTANT::REQUEST_HEADER, string> parse(boost::asio::ip::tcp::socket socket, string s);
 };
