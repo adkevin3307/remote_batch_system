@@ -14,6 +14,7 @@ using namespace std;
 void html_template(map<string, string>& information)
 {
     cout << "Content-type: text/html\r\n\r\n";
+    fflush(stdout);
 
     fstream file;
     file.open("src/console_cgi/console.html", ios::in);
@@ -55,6 +56,8 @@ void html_template(map<string, string>& information)
     }
 
     file.close();
+
+    fflush(stdout);
 }
 
 void execute_testcase(boost::asio::io_context& io_context, map<string, string>& information)
@@ -67,8 +70,7 @@ void execute_testcase(boost::asio::io_context& io_context, map<string, string>& 
         string filename = information[keys[2] + to_string(i)];
 
         if (host != "" && port != "" && filename != "") {
-            Client client(io_context, host, port, filename, i);
-            client.start();
+            make_shared<Client>(io_context, host, port, filename, i)->start();
         }
     }
 }

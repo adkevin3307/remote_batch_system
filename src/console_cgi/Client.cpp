@@ -41,8 +41,7 @@ void Client::resolve_host()
             this->connect_host(it);
         }
         else {
-            string error_message = "Resolve error: " + error_code.message();
-
+            string error_message = "Resolve error: " + error_code.message() + '\n';
             MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
         }
     });
@@ -55,8 +54,7 @@ void Client::connect_host(boost::asio::ip::tcp::resolver::iterator it)
             this->do_read();
         }
         else {
-            string error_message = "Connect error: " + error_code.message();
-
+            string error_message = "Connect error: " + error_code.message() + '\n';
             MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
         }
     });
@@ -75,6 +73,7 @@ void Client::do_read()
                 for (size_t i = 0; i < bytes; i++) {
                     s += this->_buffer[i];
                 }
+                s += '\n';
 
                 MessageHandler::output(this->id, s, CONSTANT::OUTPUT_TYPE::STDOUT);
 
@@ -82,8 +81,7 @@ void Client::do_read()
             }
         }
         else {
-            string error_message = "Read error: " + error_code.message();
-
+            string error_message = "Read error: " + error_code.message() + '\n';
             MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
         }
     });
@@ -94,19 +92,18 @@ void Client::do_write()
     string command = this->commands[this->index++];
 
     if (command.empty()) {
-        MessageHandler::output(this->id, "% ", CONSTANT::OUTPUT_TYPE::STDOUT);
+        MessageHandler::output(this->id, "% \n", CONSTANT::OUTPUT_TYPE::STDOUT);
     }
     else {
         auto handle_buffer = boost::asio::buffer(command + '\n', command.size() + 1);
         this->_socket.async_send(handle_buffer, [this](boost::system::error_code error_code, size_t bytes) {
             if (!error_code) {
-                MessageHandler::output(this->id, "% ", CONSTANT::OUTPUT_TYPE::STDOUT);
+                MessageHandler::output(this->id, "% \n", CONSTANT::OUTPUT_TYPE::STDOUT);
 
                 this->do_read();
             }
             else {
-                string error_message = "Write error: " + error_code.message();
-
+                string error_message = "Write error: " + error_code.message() + '\n';
                 MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
             }
         });
