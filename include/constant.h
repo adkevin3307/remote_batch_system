@@ -14,4 +14,10 @@ namespace CONSTANT {
         REMOTE_ADDR,
         REMOTE_PORT,
     };
+
+    enum OUTPUT_TYPE {
+        STDOUT,
+        STDERR,
+        COMMAND,
+    };
 };

@@ -3,15 +3,17 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <boost/asio.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "console_cgi/QueryParser.h"
+#include "console_cgi/Client.h"
 
 using namespace std;
 
 void html_template(map<string, string>& information)
 {
-    cout << "Content-type: text/html" << "\r\n\r\n";
+    cout << "Content-type: text/html\r\n\r\n";
 
     fstream file;
     file.open("src/console_cgi/console.html", ios::in);
@@ -55,11 +57,33 @@ void html_template(map<string, string>& information)
     file.close();
 }
 
+void execute_testcase(boost::asio::io_context& io_context, map<string, string>& information)
+{
+    vector<string> keys{ "h", "p", "f" };
+
+    for (size_t i = 0; i < information.size() / keys.size(); i++) {
+        string host = information[keys[0] + to_string(i)];
+        string port = information[keys[1] + to_string(i)];
+        string filename = information[keys[2] + to_string(i)];
+
+        if (host != "" && port != "" && filename != "") {
+            Client client(io_context, host, port, filename, i);
+            client.start();
+        }
+    }
+}
+
 int main()
 {
     map<string, string> information = QueryParser::parse();
 
     html_template(information);
+
+    boost::asio::io_context io_context;
+
+    execute_testcase(io_context, information);
+
+    io_context.run();
 
     return 0;
 }
