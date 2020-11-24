@@ -50,11 +50,11 @@ namespace CONSTANT {
                     color: #cccccc;
                 }
 
-                command {
+                green {
                     color: #01b468;
                 }
 
-                stderr {
+                red {
                     color: red;
                 }
             </style>
