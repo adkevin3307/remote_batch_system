@@ -1,11 +1,12 @@
 #include <iostream>
-#include <fstream>
 #include <map>
 #include <vector>
 #include <string>
+#include <sstream>
 #include <boost/asio.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
+#include "constant.h"
 #include "console_cgi/QueryParser.h"
 #include "console_cgi/Client.h"
 
@@ -16,14 +17,14 @@ void html_template(map<string, string>& information)
     cout << "Content-type: text/html\r\n\r\n";
     fflush(stdout);
 
-    fstream file;
-    file.open("src/console_cgi/console.html", ios::in);
-
     string s;
     int connections = 0;
     vector<string> keys{ "h", "p", "f" };
 
-    while (getline(file, s)) {
+    stringstream ss;
+    ss << CONSTANT::CONSOLE_HTML;
+
+    while (getline(ss, s)) {
         boost::trim(s);
 
         if (s == "TITLE") {
@@ -55,24 +56,7 @@ void html_template(map<string, string>& information)
         }
     }
 
-    file.close();
-
     fflush(stdout);
-}
-
-void execute_testcase(boost::asio::io_context& io_context, map<string, string>& information)
-{
-    vector<string> keys{ "h", "p", "f" };
-
-    for (size_t i = 0; i < information.size() / keys.size(); i++) {
-        string host = information[keys[0] + to_string(i)];
-        string port = information[keys[1] + to_string(i)];
-        string filename = information[keys[2] + to_string(i)];
-
-        if (host != "" && port != "" && filename != "") {
-            make_shared<Client>(io_context, host, port, filename, i)->start();
-        }
-    }
 }
 
 int main()
@@ -83,7 +67,21 @@ int main()
 
     boost::asio::io_context io_context;
 
-    execute_testcase(io_context, information);
+    vector<shared_ptr<Client>> clients;
+    vector<string> keys{ "h", "p", "f" };
+
+    for (size_t i = 0; i < information.size() / keys.size(); i++) {
+        string host = information[keys[0] + to_string(i)];
+        string port = information[keys[1] + to_string(i)];
+        string filename = information[keys[2] + to_string(i)];
+
+        if (host != "" && port != "" && filename != "") {
+            auto ptr = make_shared<Client>(io_context, host, port, filename, i);
+
+            clients.push_back(ptr);
+            ptr->start();
+        }
+    }
 
     io_context.run();
 

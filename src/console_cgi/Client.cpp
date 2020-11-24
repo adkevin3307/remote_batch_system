@@ -95,10 +95,13 @@ void Client::do_write()
         MessageHandler::output(this->id, "% \n", CONSTANT::OUTPUT_TYPE::STDOUT);
     }
     else {
-        auto handle_buffer = boost::asio::buffer(command + '\n', command.size() + 1);
-        this->_socket.async_send(handle_buffer, [this](boost::system::error_code error_code, size_t bytes) {
+        command += '\n';
+
+        auto handle_buffer = boost::asio::buffer(command, command.size());
+        this->_socket.async_send(handle_buffer, [this, command](boost::system::error_code error_code, size_t bytes) {
             if (!error_code) {
-                MessageHandler::output(this->id, "% \n", CONSTANT::OUTPUT_TYPE::STDOUT);
+                MessageHandler::output(this->id, "% ", CONSTANT::OUTPUT_TYPE::STDOUT);
+                MessageHandler::output(this->id, command, CONSTANT::OUTPUT_TYPE::COMMAND);
 
                 this->do_read();
             }
