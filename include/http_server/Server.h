@@ -13,6 +13,7 @@ private:
     boost::asio::signal_set _signal;
     boost::asio::ip::tcp::acceptor _acceptor;
     boost::asio::ip::tcp::socket _socket;
+    vector<shared_ptr<Session>> sessions;
 
     void do_wait();
     void do_accept();

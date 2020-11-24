@@ -19,6 +19,19 @@ Session::~Session()
     this->_buffer.shrink_to_fit();
 }
 
+bool Session::check()
+{
+    bool result = false;
+
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::REQUEST_METHOD) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::REQUEST_URI) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::QUERY_STRING) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::SERVER_PROTOCOL) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::HTTP_HOST) != this->header.end());
+
+    return result;
+}
+
 void Session::do_read()
 {
     auto self(shared_from_this());
@@ -26,16 +39,16 @@ void Session::do_read()
     auto handle_buffer = boost::asio::buffer(this->_buffer, this->_buffer.size());
     this->_socket.async_read_some(handle_buffer, [this, self](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
-            this->header = this->header_parser.parse(this->_socket, this->_buffer.data());
+            this->header_parser.parse(this->_socket, this->_buffer.data(), this->header);
 
-            if (!this->header.empty()) {
+            if (this->check()) {
                 this->handle_request();
             }
-            
+
             this->do_read();
         }
-        else if (error_code != boost::asio::error::operation_aborted) {
-            this->_socket.close();
+        else if (error_code != boost::asio::error::eof && error_code != boost::asio::error::operation_aborted) {
+            cerr << "Session read error: " << error_code.message() << '\n';
         }
     });
 }
@@ -96,7 +109,7 @@ void Session::handle_request()
             this->_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, trash);
         }
         else {
-            cout << "Handle error: " << error_code.message() << '\n';
+            cerr << "Session handle error: " << error_code.message() << '\n';
         }
     });
 }

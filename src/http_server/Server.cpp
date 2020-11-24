@@ -45,10 +45,13 @@ void Server::do_accept()
         if (!this->_acceptor.is_open()) return;
 
         if (!error_code) {
-            make_shared<Session>(this->_io_context, move(this->_socket))->start();
+            auto ptr = make_shared<Session>(this->_io_context, move(this->_socket));
+
+            this->sessions.push_back(ptr);
+            ptr->start();
         }
         else {
-            cerr << "Accept error: " << error_code.message() << '\n';
+            cerr << "Server accept error: " << error_code.message() << '\n';
         }
 
         this->do_accept();

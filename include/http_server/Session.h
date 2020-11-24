@@ -18,6 +18,7 @@ private:
     HeaderParser header_parser;
     map<CONSTANT::REQUEST_HEADER, string> header;
 
+    bool check();
     void do_read();
     void handle_request();
 

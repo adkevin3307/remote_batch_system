@@ -29,10 +29,9 @@ bool HeaderParser::is_method(string s)
     return (find(methods.begin(), methods.end(), s_copy) != methods.end());
 }
 
-map<CONSTANT::REQUEST_HEADER, string> HeaderParser::parse(boost::asio::ip::tcp::socket& socket, string s)
+void HeaderParser::parse(boost::asio::ip::tcp::socket& socket, string s, map<CONSTANT::REQUEST_HEADER, string>& header)
 {
     boost::trim(s);
-    map<CONSTANT::REQUEST_HEADER, string> result;
 
     stringstream ss;
     ss << s;
@@ -42,26 +41,26 @@ map<CONSTANT::REQUEST_HEADER, string> HeaderParser::parse(boost::asio::ip::tcp::
         vector<string> tokens;
         split(tokens, line, boost::is_any_of(" "), boost::token_compress_on);
 
-        if (tokens.empty()) return result;
+        if (tokens.empty()) return;
         else if (this->is_method(tokens.front())) {
-            result[CONSTANT::REQUEST_HEADER::REQUEST_METHOD] = tokens[0];
+            header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD] = tokens[0];
 
             auto it = tokens[1].find_first_of('?');
-            result[CONSTANT::REQUEST_HEADER::REQUEST_URI] = tokens[1].substr(0, it);
-            result[CONSTANT::REQUEST_HEADER::QUERY_STRING] = (it == string::npos ? "" : tokens[1].substr(it + 1));
+            header[CONSTANT::REQUEST_HEADER::REQUEST_URI] = tokens[1].substr(0, it);
+            header[CONSTANT::REQUEST_HEADER::QUERY_STRING] = (it == string::npos ? "" : tokens[1].substr(it + 1));
 
-            result[CONSTANT::REQUEST_HEADER::SERVER_PROTOCOL] = tokens[2];
+            header[CONSTANT::REQUEST_HEADER::SERVER_PROTOCOL] = tokens[2];
         }
         else if (tokens.front() == "Host:") {
-            result[CONSTANT::REQUEST_HEADER::HTTP_HOST] = tokens[1];
+            header[CONSTANT::REQUEST_HEADER::HTTP_HOST] = tokens[1];
         }
     }
 
-    result[CONSTANT::REQUEST_HEADER::SERVER_ADDR] = socket.local_endpoint().address().to_string();
-    result[CONSTANT::REQUEST_HEADER::SERVER_PORT] = to_string(socket.local_endpoint().port());
+    header[CONSTANT::REQUEST_HEADER::SERVER_ADDR] = socket.local_endpoint().address().to_string();
+    header[CONSTANT::REQUEST_HEADER::SERVER_PORT] = to_string(socket.local_endpoint().port());
 
-    result[CONSTANT::REQUEST_HEADER::REMOTE_ADDR] = socket.remote_endpoint().address().to_string();
-    result[CONSTANT::REQUEST_HEADER::REMOTE_PORT] = to_string(socket.remote_endpoint().port());
+    header[CONSTANT::REQUEST_HEADER::REMOTE_ADDR] = socket.remote_endpoint().address().to_string();
+    header[CONSTANT::REQUEST_HEADER::REMOTE_PORT] = to_string(socket.remote_endpoint().port());
 
-    return result;
+    return;
 }
