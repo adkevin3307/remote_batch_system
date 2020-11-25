@@ -1,31 +1,41 @@
-EXE = http_server console.cgi
+EXE_1 = http_server console.cgi
+EXE_2 = cgi_server.exe
 OBJ_DIR = obj
 
-SOURCES = $(wildcard src/*.cpp)
+SOURCES = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
 
-SOURCES_HTTP_SERVER = $(SOURCES) $(wildcard src/http_server/*.cpp)
-SOURCES_CONSOLE_CGI = $(SOURCES) $(wildcard src/console_cgi/*.cpp)
-
-OBJS_HTTP_SERVER = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES_HTTP_SERVER)))))
-OBJS_CONSOLE_CGI = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(notdir $(SOURCES_CONSOLE_CGI)))))
+OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(SOURCES:src/%=%))))
+OBJS_HTTP_SERVER = $(filter $(OBJ_DIR)/http_server/%.o, $(OBJS))
+OBJS_CONSOLE_CGI = $(filter $(OBJ_DIR)/console_cgi/%.o, $(OBJS))
+OBJS_CGI_SERVER = $(filter-out $(OBJ_DIR)/console_cgi/console_cgi.o $(OBJ_DIR)/http_server/http_server.o, $(OBJS))
 
 CXXFLAGS = -std=c++17 -I./include -Wall -O2
 
 LIBS = -lpthread -lboost_system -lboost_filesystem
 
-all: create_object_directory $(EXE)
+ifeq ($(MAKECMDGOALS), part2)
+	CXXFLAGS += -DWINDOWS
+endif
+
+all: part1 part2
 	@echo Compile Success
 
+part1: create_object_directory $(EXE_1)
+	@echo Compile Part 1
+
+part2: create_object_directory $(EXE_2)
+	@echo Compile Part 2
+
 create_object_directory:
-	mkdir -p $(OBJ_DIR)
+	mkdir -p $(OBJ_DIR)/http_server $(OBJ_DIR)/console_cgi $(OBJ_DIR)/cgi_server $(OBJ_DIR)/panel_cgi
 
 $(OBJ_DIR)/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/%.o: src/http_server/%.cpp
+$(OBJ_DIR)/%/%.o: src/%/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/%.o: src/console_cgi/%.cpp
+$(OBJ_DIR)/http_server/%.o: src/http_server/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 http_server: $(OBJS_HTTP_SERVER)
@@ -34,5 +44,8 @@ http_server: $(OBJS_HTTP_SERVER)
 console.cgi: $(OBJS_CONSOLE_CGI)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
+cgi_server.exe: $(OBJS_CGI_SERVER)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
+
 clean:
-	rm -rf $(EXE) $(OBJ_DIR)
+	rm -rf $(EXE_1) $(EXE_2) $(OBJ_DIR)
