@@ -22,7 +22,7 @@ int main(int argc, char** argv)
         io_context->run();
     }
     catch (exception& error) {
-        cerr << "Exception: " << error.what() << '\n';
+        cerr << "Http server exception: " << error.what() << '\n';
     }
 
     return 0;

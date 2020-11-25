@@ -16,7 +16,7 @@ int main()
         io_context->run();
     }
     catch (exception& error) {
-        cerr << "Exception: " << error.what() << '\n';
+        cerr << "Console cgi exception: " << error.what() << '\n';
     }
 
     return 0;
