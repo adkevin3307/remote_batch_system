@@ -5,7 +5,7 @@
 #include <string>
 #include <boost/asio.hpp>
 
-#include "console_cgi/Session.h"
+#include "console_cgi/ClientSession.h"
 
 using namespace std;
 
@@ -14,7 +14,7 @@ private:
     vector<string> keys;
     map<string, string> information;
     shared_ptr<boost::asio::io_context> _io_context;
-    vector<shared_ptr<Session>> sessions;
+    vector<shared_ptr<ClientSession>> sessions;
 
     void html_template();
     void execute_sessions();

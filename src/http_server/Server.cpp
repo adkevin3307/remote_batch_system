@@ -3,8 +3,6 @@
 #include <iostream>
 #include <sys/wait.h>
 
-#include "http_server/Session.h"
-
 using namespace std;
 
 Server::Server(shared_ptr<boost::asio::io_context> io_context, int port)
@@ -45,7 +43,7 @@ void Server::do_accept()
         if (!this->_acceptor.is_open()) return;
 
         if (!error_code) {
-            auto ptr = make_shared<Session>(this->_io_context, move(this->_socket));
+            auto ptr = make_shared<ServerSession>(this->_io_context, move(this->_socket));
 
             this->sessions.push_back(ptr);
             ptr->start();

@@ -6,7 +6,7 @@
 
 using namespace std;
 
-class Session : public enable_shared_from_this<Session> {
+class ClientSession : public enable_shared_from_this<ClientSession> {
 private:
     int index;
     string id, host, port, filename;
@@ -21,8 +21,8 @@ private:
     void do_write();
 
 public:
-    Session(shared_ptr<boost::asio::io_context> io_context, int id, string host, string port, string filename);
-    ~Session();
+    ClientSession(shared_ptr<boost::asio::io_context> io_context, int id, string host, string port, string filename);
+    ~ClientSession();
 
     void start();
 };

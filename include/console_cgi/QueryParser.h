@@ -5,10 +5,10 @@
 
 using namespace std;
 
-class Parser {
+class QueryParser {
 public:
-    Parser();
-    ~Parser();
+    QueryParser();
+    ~QueryParser();
 
     static map<string, string> parse();
 };

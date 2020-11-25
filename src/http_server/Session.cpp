@@ -1,25 +1,33 @@
-#include "http_server/Session.h"
+#include "http_server/ServerSession.h"
 
 #include <iostream>
 #include <cstdlib>
 #include <boost/filesystem.hpp>
 
+#ifdef WINDOWS
+#include <exception>
+#include <boost/asio.hpp>
+
+#include "panel_cgi/Panel.h"
+#include "console_cgi/Client.h"
+#endif
+
 using namespace std;
 
-Session::Session(shared_ptr<boost::asio::io_context> io_context, boost::asio::ip::tcp::socket socket)
+ServerSession::ServerSession(shared_ptr<boost::asio::io_context> io_context, boost::asio::ip::tcp::socket socket)
     : _socket(move(socket))
 {
     this->_io_context = shared_ptr<boost::asio::io_context>(io_context);
     this->_buffer.resize(CONSTANT::MAX_BUFFER_SIZE);
 }
 
-Session::~Session()
+ServerSession::~ServerSession()
 {
     this->_buffer.clear();
     this->_buffer.shrink_to_fit();
 }
 
-bool Session::check()
+bool ServerSession::check()
 {
     bool result = false;
 
@@ -36,7 +44,7 @@ bool Session::check()
     return result;
 }
 
-void Session::do_read()
+void ServerSession::do_read()
 {
     auto self(shared_from_this());
 
@@ -52,12 +60,12 @@ void Session::do_read()
             this->do_read();
         }
         else if (error_code != boost::asio::error::eof && error_code != boost::asio::error::operation_aborted) {
-            cerr << "Session read error: " << error_code.message() << '\n';
+            cerr << "ServerSession read error: " << error_code.message() << '\n';
         }
     });
 }
 
-void Session::handle_request()
+void ServerSession::handle_request()
 {
     auto self(shared_from_this());
 
@@ -76,6 +84,25 @@ void Session::handle_request()
     auto handle_buffer = boost::asio::buffer(response_header, response_header.length());
     this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
+#ifdef WINDOWS
+            cout << "windows" << '\n';
+
+            if (exec_file.string().find("panel.cgi") != string::npos) {
+                Panel panel;
+            }
+            else if (exec_file.string().find("console.cgi") != string::npos) {
+                try {
+                    shared_ptr<boost::asio::io_context> io_context(new boost::asio::io_context);
+
+                    Client client(io_context);
+
+                    io_context->run();
+                }
+                catch (exception& error) {
+                    cerr << "Console cgi exception: " << error.what() << '\n';
+                }
+            }
+#else
             setenv("REQUEST_METHOD", this->header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD].c_str(), 1);
             setenv("REQUEST_URI", this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI].c_str(), 1);
             setenv("QUERY_STRING", this->header[CONSTANT::REQUEST_HEADER::QUERY_STRING].c_str(), 1);
@@ -106,14 +133,15 @@ void Session::handle_request()
 
                 this->_socket.close();
             }
+#endif
         }
         else if (error_code != boost::asio::error::operation_aborted) {
-            cerr << "Session handle error: " << error_code.message() << '\n';
+            cerr << "ServerSession handle error: " << error_code.message() << '\n';
         }
     });
 }
 
-void Session::start()
+void ServerSession::start()
 {
     this->do_read();
 }

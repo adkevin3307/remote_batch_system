@@ -6,16 +6,16 @@
 #include <boost/asio.hpp>
 
 #include "constant.h"
-#include "http_server/Parser.h"
+#include "http_server/HeaderParser.h"
 
 using namespace std;
 
-class Session : public enable_shared_from_this<Session> {
+class ServerSession : public enable_shared_from_this<ServerSession> {
 private:
     shared_ptr<boost::asio::io_context> _io_context;
     boost::asio::ip::tcp::socket _socket;
     vector<char> _buffer;
-    Parser parser;
+    HeaderParser parser;
     map<CONSTANT::REQUEST_HEADER, string> header;
 
     bool check();
@@ -23,8 +23,8 @@ private:
     void handle_request();
 
 public:
-    Session(shared_ptr<boost::asio::io_context> io_context, boost::asio::ip::tcp::socket socket);
-    ~Session();
+    ServerSession(shared_ptr<boost::asio::io_context> io_context, boost::asio::ip::tcp::socket socket);
+    ~ServerSession();
 
     void start();
 };

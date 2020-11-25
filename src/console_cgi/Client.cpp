@@ -5,7 +5,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "constant.h"
-#include "console_cgi/Parser.h"
+#include "console_cgi/QueryParser.h"
 
 using namespace std;
 
@@ -14,7 +14,7 @@ Client::Client(shared_ptr<boost::asio::io_context> io_context)
     this->_io_context = shared_ptr<boost::asio::io_context>(io_context);
 
     this->keys = vector<string>{ "h", "p", "f" };
-    this->information = Parser::parse();
+    this->information = QueryParser::parse();
 
     this->html_template();
     this->execute_sessions();
@@ -81,7 +81,7 @@ void Client::execute_sessions()
         string filename = this->information[keys[2] + to_string(i)];
 
         if (host != "" && port != "" && filename != "") {
-            auto ptr = make_shared<Session>(this->_io_context, i, host, port, filename);
+            auto ptr = make_shared<ClientSession>(this->_io_context, i, host, port, filename);
 
             this->sessions.push_back(ptr);
             ptr->start();

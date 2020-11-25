@@ -1,4 +1,4 @@
-#include "console_cgi/Parser.h"
+#include "console_cgi/QueryParser.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -7,15 +7,15 @@
 
 using namespace std;
 
-Parser::Parser()
+QueryParser::QueryParser()
 {
 }
 
-Parser::~Parser()
+QueryParser::~QueryParser()
 {
 }
 
-map<string, string> Parser::parse()
+map<string, string> QueryParser::parse()
 {
     map<string, string> result;
     string target = "QUERY_STRING";
