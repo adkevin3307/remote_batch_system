@@ -4,3 +4,4 @@ test_case/
 *.cgi
 np_single_golden
 /http_server
+/cgi_server.exe

@@ -99,4 +99,6 @@ void Panel::html_template()
             cout << s << '\n';
         }
     }
+
+    fflush(stdout);
 }

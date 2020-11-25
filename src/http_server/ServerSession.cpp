@@ -72,6 +72,16 @@ void ServerSession::handle_request()
     string response_header = "";
     boost::filesystem::path exec_file = boost::filesystem::current_path() / this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI];
 
+#ifdef WINDOWS
+    if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/panel.cgi" || this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/console.cgi") {
+        response_header += "HTTP/1.1 200 OK\r\n";
+    }
+    else {
+        response_header += "HTTP/1.1 404 Not Found\r\n";
+        response_header += "Content-Length: 20\r\n";
+        response_header += "<h1>Not Found</h1>\r\n";
+    }
+#else
     if (boost::filesystem::is_regular_file(exec_file)) {
         response_header += "HTTP/1.1 200 OK\r\n";
     }
@@ -80,21 +90,31 @@ void ServerSession::handle_request()
         response_header += "Content-Length: 20\r\n";
         response_header += "<h1>Not Found</h1>\r\n";
     }
+#endif
 
     auto handle_buffer = boost::asio::buffer(response_header, response_header.length());
     this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
 #ifdef WINDOWS
-            cout << "windows" << '\n';
+            int old_stdin = dup(STDIN_FILENO);
+            int old_stdout = dup(STDOUT_FILENO);
+            int old_stderr = dup(STDERR_FILENO);
 
-            if (exec_file.string().find("panel.cgi") != string::npos) {
+            int socket_fd = this->_socket.native_handle();
+            dup2(socket_fd, STDIN_FILENO);
+            dup2(socket_fd, STDOUT_FILENO);
+            dup2(socket_fd, STDERR_FILENO);
+
+            this->_socket.close();
+
+            if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/panel.cgi") {
                 Panel panel;
             }
-            else if (exec_file.string().find("console.cgi") != string::npos) {
+            else if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/console.cgi") {
                 try {
                     shared_ptr<boost::asio::io_context> io_context(new boost::asio::io_context);
 
-                    Client client(io_context);
+                    Client client(io_context, this->header[CONSTANT::REQUEST_HEADER::QUERY_STRING]);
 
                     io_context->run();
                 }
@@ -102,6 +122,14 @@ void ServerSession::handle_request()
                     cerr << "Console cgi exception: " << error.what() << '\n';
                 }
             }
+
+            dup2(old_stdin, STDIN_FILENO);
+            dup2(old_stdout, STDOUT_FILENO);
+            dup2(old_stderr, STDERR_FILENO);
+
+            close(old_stdin);
+            close(old_stdout);
+            close(old_stderr);
 #else
             setenv("REQUEST_METHOD", this->header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD].c_str(), 1);
             setenv("REQUEST_URI", this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI].c_str(), 1);

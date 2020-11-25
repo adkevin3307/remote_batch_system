@@ -10,5 +10,5 @@ public:
     QueryParser();
     ~QueryParser();
 
-    static map<string, string> parse();
+    static map<string, string> parse(string s);
 };

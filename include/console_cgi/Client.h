@@ -21,5 +21,6 @@ private:
 
 public:
     Client(shared_ptr<boost::asio::io_context> io_context);
+    Client(shared_ptr<boost::asio::io_context> io_context, string query);
     ~Client();
 };
