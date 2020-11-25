@@ -35,9 +35,6 @@ $(OBJ_DIR)/%.o: src/%.cpp
 $(OBJ_DIR)/%/%.o: src/%/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/http_server/%.o: src/http_server/%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
-
 http_server: $(OBJS_HTTP_SERVER)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)
 
