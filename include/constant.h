@@ -25,9 +25,8 @@ namespace CONSTANT {
         COMMAND,
     };
 
-    const static string CONSOLE_HTML = 
-        R"(<!DOCTYPE html>
-
+    const static string CONSOLE_HTML = R"(
+        <!DOCTYPE html>
         <html lang='en'>
 
         <head>
@@ -72,5 +71,45 @@ namespace CONSTANT {
         </body>
 
         </html>
-        )";
+    )";
+
+    const static string PANEL_HTML = R"(
+        <!DOCTYPE html>
+        <html lang='en'>
+
+        <head>
+            <title>NP Project 3 Panel</title>
+            <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css' integrity='sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2' crossorigin='anonymous'>
+            <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro' rel='stylesheet'>
+            <link rel='icon' type='image/png' href='https://cdn4.iconfinder.com/data/icons/iconsimple-setting-time/512/dashboard-512.png'>
+            <style>
+                * {
+                    font-family: 'Source Code Pro', monospace;
+                }
+            </style>
+        </head>
+        <body class='bg-secondary pt-5'>
+            <form action='console.cgi' method='GET'>
+                <table class='table mx-auto bg-light' style='width: inherit'>
+                    <thead class='thead-dark'>
+                        <tr>
+                            <th scope='col'>#</th>
+                            <th scope='col'>Host</th>
+                            <th scope='col'>Port</th>
+                            <th scope='col'>Input File</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        CONTENT
+                        <tr>
+                            <td colspan='3'></td>
+                            <td><button type='submit' class='btn btn-info btn-block'>Run</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </body>
+
+        </html>
+    )";
 };
