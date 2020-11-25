@@ -1,29 +1,25 @@
 #pragma once
 
+#include <map>
 #include <vector>
 #include <string>
 #include <boost/asio.hpp>
 
+#include "console_cgi/Session.h"
+
 using namespace std;
 
-class Client : public enable_shared_from_this<Client> {
+class Client {
 private:
-    string id;
-    int index;
-    string host, port, filename;
-    vector<string> commands;
-    vector<char> _buffer;
-    boost::asio::ip::tcp::socket _socket;
-    boost::asio::ip::tcp::resolver _resolver;
+    vector<string> keys;
+    map<string, string> information;
+    shared_ptr<boost::asio::io_context> _io_context;
+    vector<shared_ptr<Session>> sessions;
 
-    void resolve_host();
-    void connect_host(boost::asio::ip::tcp::resolver::iterator it);
-    void do_read();
-    void do_write();
+    void html_template();
+    void execute_sessions();
 
 public:
-    Client(boost::asio::io_context& io_context, string host, string port, string filename, int id);
+    Client(shared_ptr<boost::asio::io_context> io_context);
     ~Client();
-
-    void start();
 };

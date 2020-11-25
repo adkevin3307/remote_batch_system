@@ -1,130 +1,90 @@
 #include "console_cgi/Client.h"
 
-#include <boost/filesystem.hpp>
+#include <iostream>
+#include <vector>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "constant.h"
-#include "console_cgi/MessageHandler.h"
+#include "console_cgi/Parser.h"
 
 using namespace std;
 
-Client::Client(boost::asio::io_context& io_context, string host, string port, string filename, int id)
-    : _socket(io_context), _resolver(io_context)
+Client::Client(shared_ptr<boost::asio::io_context> io_context)
 {
-    this->id = to_string(id);
-    this->host = host;
-    this->port = port;
-    this->filename = filename;
+    this->_io_context = shared_ptr<boost::asio::io_context>(io_context);
 
-    this->index = 0;
-    this->_buffer.resize(CONSTANT::MAX_BUFFER_SIZE);
+    this->keys = vector<string>{ "h", "p", "f" };
+    this->information = Parser::parse();
 
-    boost::filesystem::path test_filename = boost::filesystem::path("test_case") / this->filename;
-
-    if (boost::filesystem::is_regular_file(test_filename)) {
-        string line;
-        boost::filesystem::fstream file(test_filename);
-
-        while (getline(file, line)) {
-            boost::trim(line);
-
-            this->commands.push_back(line);
-        }
-
-        file.close();
-    }
+    this->html_template();
+    this->execute_sessions();
 }
 
 Client::~Client()
 {
 }
 
-void Client::resolve_host()
+void Client::html_template()
 {
-    boost::asio::ip::tcp::resolver::query query(this->host, this->port);
-    this->_resolver.async_resolve(query, [this](const boost::system::error_code& error_code, boost::asio::ip::tcp::resolver::iterator it) {
-        if (!error_code) {
-            this->connect_host(it);
-        }
-        else {
-            string error_message = "Client resolve error: " + error_code.message() + '\n';
-            MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
-        }
-    });
-}
+    cout << "Content-type: text/html\r\n\r\n";
+    fflush(stdout);
 
-void Client::connect_host(boost::asio::ip::tcp::resolver::iterator it)
-{
-    this->_socket.async_connect(it->endpoint(), [this](const boost::system::error_code& error_code) {
-        if (!error_code) {
-            this->do_read();
-        }
-        else {
-            string error_message = "Client connect error: " + error_code.message() + '\n';
-            MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
-        }
-    });
-}
+    string s;
+    int connections = 0;
 
-void Client::do_read()
-{
-    auto handle_buffer = boost::asio::buffer(this->_buffer, this->_buffer.size());
-    this->_socket.async_read_some(handle_buffer, [this](const boost::system::error_code& error_code, size_t bytes) {
-        if (!error_code) {
-            string s = "";
-            for (size_t i = 0; i < bytes; i++) {
-                s += this->_buffer[i];
-            }
+    stringstream ss;
+    ss << CONSTANT::CONSOLE_HTML;
 
-            MessageHandler::output(this->id, s, CONSTANT::OUTPUT_TYPE::STDOUT);
+    while (getline(ss, s)) {
+        boost::trim(s);
 
-            if (s.find('%') != string::npos) {
-                this->do_write();
-            }
+        if (s == "TITLE") {
+            cout << "<tr>" << '\n';
 
-            this->do_read();
-        }
-        else if (error_code != boost::asio::error::eof && error_code != boost::asio::error::operation_aborted) {
-            string error_message = "Client read error: " + error_code.message() + '\n';
-            MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
-        }
-    });
-}
+            for (size_t i = 0; i < this->information.size() / this->keys.size(); i++) {
+                string host = this->information[this->keys[0] + to_string(i)];
+                string port = this->information[this->keys[1] + to_string(i)];
 
-void Client::do_write()
-{
-    string command = this->commands[this->index++];
+                if (host != "" && port != "") {
+                    connections += 1;
 
-    if (command.empty()) {
-        MessageHandler::output(this->id, "\n", CONSTANT::OUTPUT_TYPE::STDOUT);
-    }
-    else {
-        command += '\n';
-
-        auto handle_buffer = boost::asio::buffer(command, command.length());
-        this->_socket.async_send(handle_buffer, [this, command](boost::system::error_code error_code, size_t bytes) {
-            if (!error_code) {
-                MessageHandler::output(this->id, command, CONSTANT::OUTPUT_TYPE::COMMAND);
-
-                if (command == "exit\n") {
-                    this->_socket.close();
-
-                    boost::system::error_code trash;
-                    this->_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, trash);
-                }
-                else {
-                    this->do_read();
+                    cout << "<th scope='col'>" << '\n';
+                    cout << host << ':' << port << '\n';
+                    cout << "</th>" << '\n';
                 }
             }
-            else {
-                string error_message = "Client write error: " + error_code.message() + '\n';
-                MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
+
+            cout << "</tr>" << '\n';
+        }
+        else if (s == "CONTENT") {
+            cout << "<tr>" << '\n';
+
+            for (auto i = 0; i < connections; i++) {
+                cout << "<td><pre id='s" << i << "' class='mb-0'></pre></td>" << '\n';
             }
-        });
+
+            cout << "</tr>" << '\n';
+        }
+        else {
+            cout << s << '\n';
+        }
     }
+
+    fflush(stdout);
 }
 
-void Client::start()
+void Client::execute_sessions()
 {
-    this->resolve_host();
+    for (size_t i = 0; i < this->information.size() / this->keys.size(); i++) {
+        string host = this->information[keys[0] + to_string(i)];
+        string port = this->information[keys[1] + to_string(i)];
+        string filename = this->information[keys[2] + to_string(i)];
+
+        if (host != "" && port != "" && filename != "") {
+            auto ptr = make_shared<Session>(this->_io_context, i, host, port, filename);
+
+            this->sessions.push_back(ptr);
+            ptr->start();
+        }
+    }
 }

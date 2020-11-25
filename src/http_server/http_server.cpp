@@ -19,7 +19,7 @@ int main(int argc, char** argv)
 
         Server server(io_context, atoi(argv[1]));
 
-        (*io_context).run();
+        io_context->run();
     }
     catch (exception& error) {
         cerr << "Exception: " << error.what() << '\n';
