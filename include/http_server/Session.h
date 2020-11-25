@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 
 #include "constant.h"
-#include "http_server/HeaderParser.h"
+#include "http_server/Parser.h"
 
 using namespace std;
 
@@ -15,7 +15,7 @@ private:
     shared_ptr<boost::asio::io_context> _io_context;
     boost::asio::ip::tcp::socket _socket;
     vector<char> _buffer;
-    HeaderParser header_parser;
+    Parser parser;
     map<CONSTANT::REQUEST_HEADER, string> header;
 
     bool check();

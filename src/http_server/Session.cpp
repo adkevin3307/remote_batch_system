@@ -28,6 +28,10 @@ bool Session::check()
     result = result || (this->header.find(CONSTANT::REQUEST_HEADER::QUERY_STRING) != this->header.end());
     result = result || (this->header.find(CONSTANT::REQUEST_HEADER::SERVER_PROTOCOL) != this->header.end());
     result = result || (this->header.find(CONSTANT::REQUEST_HEADER::HTTP_HOST) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::SERVER_ADDR) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::SERVER_PORT) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::REMOTE_ADDR) != this->header.end());
+    result = result || (this->header.find(CONSTANT::REQUEST_HEADER::REMOTE_PORT) != this->header.end());
 
     return result;
 }
@@ -39,7 +43,7 @@ void Session::do_read()
     auto handle_buffer = boost::asio::buffer(this->_buffer, this->_buffer.size());
     this->_socket.async_read_some(handle_buffer, [this, self](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
-            this->header_parser.parse(this->_socket, this->_buffer.data(), this->header);
+            this->parser.parse(this->_socket, this->_buffer.data(), this->header);
 
             if (this->check()) {
                 this->handle_request();
@@ -99,16 +103,11 @@ void Session::handle_request()
             }
             else {
                 this->_io_context->notify_fork(boost::asio::io_context::fork_parent);
+
+                this->_socket.close();
             }
         }
-
-        if (error_code != boost::asio::error::operation_aborted) {
-            this->_socket.close();
-
-            boost::system::error_code trash;
-            this->_socket.shutdown(boost::asio::ip::tcp::socket::shutdown_both, trash);
-        }
-        else {
+        else if (error_code != boost::asio::error::operation_aborted) {
             cerr << "Session handle error: " << error_code.message() << '\n';
         }
     });

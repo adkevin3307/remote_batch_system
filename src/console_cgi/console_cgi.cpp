@@ -7,7 +7,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "constant.h"
-#include "console_cgi/QueryParser.h"
+#include "console_cgi/Parser.h"
 #include "console_cgi/Client.h"
 
 using namespace std;
@@ -61,7 +61,7 @@ void html_template(map<string, string>& information)
 
 int main()
 {
-    map<string, string> information = QueryParser::parse();
+    map<string, string> information = Parser::parse();
 
     html_template(information);
 
