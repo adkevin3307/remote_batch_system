@@ -3,8 +3,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include <boost/filesystem.hpp>
-#include <boost/range/iterator_range.hpp>
+#include <dirent.h>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "constant.h"
@@ -23,11 +22,16 @@ Panel::Panel(int servers, int host_amount, string testcase_path, string domain)
         this->hosts.push_back(s);
     }
 
-    boost::filesystem::path path(this->testcase_path);
+    DIR *dp;
+    dirent *dirp;
 
-    if (boost::filesystem::is_directory(path)) {
-        for (auto it : boost::make_iterator_range(boost::filesystem::directory_iterator(path), {})) {
-            this->testcases.push_back(it.path().filename().string());
+    if ((dp = opendir(this->testcase_path.c_str())) != NULL) {
+        while ((dirp = readdir(dp)) != NULL) {
+            string temp = dirp->d_name;
+
+            if (temp.find("txt") != string::npos) {
+                this->testcases.push_back(temp);
+            }
         }
 
         sort(this->testcases.begin(), this->testcases.end());

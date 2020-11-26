@@ -4,7 +4,7 @@
 #include <iostream>
 #endif
 
-#include <boost/filesystem.hpp>
+#include <fstream>
 #include <boost/algorithm/string/trim.hpp>
 
 #include "constant.h"
@@ -23,20 +23,17 @@ ClientSession::ClientSession(shared_ptr<boost::asio::io_context> io_context, int
     this->index = 0;
     this->_buffer.resize(CONSTANT::MAX_BUFFER_SIZE);
 
-    boost::filesystem::path test_filename = boost::filesystem::path("test_case") / this->filename;
+    fstream file;
+    file.open("test_cast" + this->filename, ios::in);
 
-    if (boost::filesystem::is_regular_file(test_filename)) {
-        string line;
-        boost::filesystem::fstream file(test_filename);
+    string line;
+    while (getline(file, line)) {
+        boost::trim(line);
 
-        while (getline(file, line)) {
-            boost::trim(line);
-
-            this->commands.push_back(line);
-        }
-
-        file.close();
+        this->commands.push_back(line);
     }
+
+    file.close();
 }
 
 ClientSession::~ClientSession()
