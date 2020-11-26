@@ -2,8 +2,6 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <unistd.h>
-#include <boost/filesystem.hpp>
 
 #ifdef WINDOWS
 #include <exception>
@@ -11,6 +9,10 @@
 
 #include "panel_cgi/Panel.h"
 #include "console_cgi/Client.h"
+#include "console_cgi/MessageHandler.h"
+#else
+#include <unistd.h>
+#include <boost/filesystem.hpp>
 #endif
 
 using namespace std;
@@ -61,7 +63,7 @@ void ServerSession::do_read()
             this->do_read();
         }
         else if (error_code != boost::asio::error::eof && error_code != boost::asio::error::operation_aborted) {
-            cerr << "ServerSession read error: " << error_code.message() << '\n';
+            cerr << "Server session read error: " << error_code.message() << '\n';
         }
     });
 }
@@ -71,8 +73,6 @@ void ServerSession::handle_request()
     auto self(shared_from_this());
 
     string response_header = "";
-    boost::filesystem::path exec_file = boost::filesystem::current_path() / this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI];
-
 #ifdef WINDOWS
     if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/panel.cgi" || this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/console.cgi") {
         response_header += "HTTP/1.1 200 OK\r\n";
@@ -82,35 +82,27 @@ void ServerSession::handle_request()
         response_header += "Content-Length: 20\r\n";
         response_header += "<h1>Not Found</h1>\r\n";
     }
-#else
-    if (boost::filesystem::is_regular_file(exec_file)) {
-        response_header += "HTTP/1.1 200 OK\r\n";
-    }
-    else {
-        response_header += "HTTP/1.1 404 Not Found\r\n";
-        response_header += "Content-Length: 20\r\n";
-        response_header += "<h1>Not Found</h1>\r\n";
-    }
-#endif
 
     auto handle_buffer = boost::asio::buffer(response_header, response_header.length());
-    this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
+    this->_socket.async_send(handle_buffer, [this, self](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
-#ifdef WINDOWS
             if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/panel.cgi") {
                 Panel panel;
 
                 string response = panel.html_response();
-                this->_socket.async_send(boost::asio::buffer(response, response.length()), [](boost::system::error_code error_code, size_t bytes) {
+                string context = panel.html_template();
+
+                auto response_buffer = boost::asio::buffer(response, response.length());
+                boost::asio::async_write(this->_socket, response_buffer, [](boost::system::error_code error_code, size_t bytes) {
                     if (error_code) {
-                        cerr << error_code.message() << '\n';
+                        cerr << "Server session windows: " << error_code.message() << '\n';
                     }
                 });
 
-                string context = panel.html_template();
-                this->_socket.async_send(boost::asio::buffer(context, context.length()), [](boost::system::error_code error_code, size_t bytes) {
+                auto context_buffer = boost::asio::buffer(context, context.length());
+                boost::asio::async_write(this->_socket, context_buffer, [](boost::system::error_code error_code, size_t bytes) {
                     if (error_code) {
-                        cerr << error_code.message() << '\n';
+                        cerr << "Server session windows: " << error_code.message() << '\n';
                     }
                 });
             }
@@ -120,13 +112,52 @@ void ServerSession::handle_request()
 
                     Client client(io_context, this->header[CONSTANT::REQUEST_HEADER::QUERY_STRING]);
 
+                    string response = client.html_response();
+                    string context = client.html_template();
+
+                    auto response_buffer = boost::asio::buffer(response, response.length());
+                    boost::asio::async_write(this->_socket, response_buffer, [](boost::system::error_code error_code, size_t bytes) {
+                        if (error_code) {
+                            cerr << "Server session windows: " << error_code.message() << '\n';
+                        }
+                    });
+
+                    auto context_buffer = boost::asio::buffer(context, context.length());
+                    boost::asio::async_write(this->_socket, context_buffer, [](boost::system::error_code error_code, size_t bytes) {
+                        if (error_code) {
+                            cerr << "Server session windows: " << error_code.message() << '\n';
+                        }
+                    });
+
+                    MessageHandler::enable(&(this->_socket));
+                    client.execute_sessions();
+
                     io_context->run();
                 }
                 catch (exception& error) {
                     cerr << "Console cgi exception: " << error.what() << '\n';
                 }
             }
+        }
+        else if (error_code != boost::asio::error::operation_aborted) {
+            cerr << "Server session handle error: " << error_code.message() << '\n';
+        }
+    });
 #else
+    boost::filesystem::path exec_file = boost::filesystem::current_path() / this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI];
+
+    if (boost::filesystem::is_regular_file(exec_file)) {
+        response_header += "HTTP/1.1 200 OK\r\n";
+    }
+    else {
+        response_header += "HTTP/1.1 404 Not Found\r\n";
+        response_header += "Content-Length: 20\r\n";
+        response_header += "<h1>Not Found</h1>\r\n";
+    }
+
+    auto handle_buffer = boost::asio::buffer(response_header, response_header.length());
+    this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
+        if (!error_code) {
             setenv("REQUEST_METHOD", this->header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD].c_str(), 1);
             setenv("REQUEST_URI", this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI].c_str(), 1);
             setenv("QUERY_STRING", this->header[CONSTANT::REQUEST_HEADER::QUERY_STRING].c_str(), 1);
@@ -157,12 +188,12 @@ void ServerSession::handle_request()
 
                 this->_socket.close();
             }
-#endif
         }
         else if (error_code != boost::asio::error::operation_aborted) {
-            cerr << "ServerSession handle error: " << error_code.message() << '\n';
+            cerr << "Server session handle error: " << error_code.message() << '\n';
         }
     });
+#endif
 }
 
 void ServerSession::start()

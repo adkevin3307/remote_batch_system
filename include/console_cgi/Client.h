@@ -16,11 +16,12 @@ private:
     shared_ptr<boost::asio::io_context> _io_context;
     vector<shared_ptr<ClientSession>> sessions;
 
-    void html_template();
-    void execute_sessions();
-
 public:
     Client(shared_ptr<boost::asio::io_context> io_context);
     Client(shared_ptr<boost::asio::io_context> io_context, string query);
     ~Client();
+
+    string html_response();
+    string html_template();
+    void execute_sessions();
 };

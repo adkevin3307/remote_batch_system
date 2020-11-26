@@ -16,7 +16,12 @@ Client::Client(shared_ptr<boost::asio::io_context> io_context)
     this->keys = vector<string>{ "h", "p", "f" };
     this->information = QueryParser::parse(getenv("QUERY_STRING"));
 
-    this->html_template();
+    cout << this->html_response();
+    fflush(stdout);
+
+    cout << this->html_template();
+    fflush(stdout);
+
     this->execute_sessions();
 }
 
@@ -26,31 +31,32 @@ Client::Client(shared_ptr<boost::asio::io_context> io_context, string query)
 
     this->keys = vector<string>{ "h", "p", "f" };
     this->information = QueryParser::parse(query);
-
-    this->html_template();
-    this->execute_sessions();
 }
 
 Client::~Client()
 {
 }
 
-void Client::html_template()
+string Client::html_response()
 {
-    cout << "Content-type: text/html\r\n\r\n";
-    fflush(stdout);
+    string s = "Content-type: text/html\r\n\r\n";
 
+    return s;
+}
+
+string Client::html_template()
+{
     string s;
     int connections = 0;
 
-    stringstream ss;
+    stringstream ss, result;
     ss << CONSTANT::CONSOLE_HTML;
 
     while (getline(ss, s)) {
         boost::trim(s);
 
         if (s == "TITLE") {
-            cout << "<tr>" << '\n';
+            result << "<tr>" << '\n';
 
             for (size_t i = 0; i < this->information.size() / this->keys.size(); i++) {
                 string host = this->information[this->keys[0] + to_string(i)];
@@ -59,29 +65,29 @@ void Client::html_template()
                 if (host != "" && port != "") {
                     connections += 1;
 
-                    cout << "<th scope='col'>" << '\n';
-                    cout << host << ':' << port << '\n';
-                    cout << "</th>" << '\n';
+                    result << "<th scope='col'>" << '\n';
+                    result << host << ':' << port << '\n';
+                    result << "</th>" << '\n';
                 }
             }
 
-            cout << "</tr>" << '\n';
+            result << "</tr>" << '\n';
         }
         else if (s == "CONTENT") {
-            cout << "<tr>" << '\n';
+            result << "<tr>" << '\n';
 
             for (auto i = 0; i < connections; i++) {
-                cout << "<td><pre id='s" << i << "' class='mb-0'></pre></td>" << '\n';
+                result << "<td><pre id='s" << i << "' class='mb-0'></pre></td>" << '\n';
             }
 
-            cout << "</tr>" << '\n';
+            result << "</tr>" << '\n';
         }
         else {
-            cout << s << '\n';
+            result << s << '\n';
         }
     }
 
-    fflush(stdout);
+    return result.str();
 }
 
 void Client::execute_sessions()
