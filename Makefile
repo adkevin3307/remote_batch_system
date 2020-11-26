@@ -15,13 +15,13 @@ CXXFLAGS = -std=c++17 -I./include -Wall -O2
 LIBS = -lpthread -lboost_system -lboost_filesystem
 
 all: part1 part2
-	@echo -e "Compile Success"
+	@echo Compile Success
 
 part1: create_object_directory $(EXE_1)
-	@echo -e "\e[32mPart 1 Compile Finish\e[39m"
+	@echo Part 1 Compile Finish
 
 part2: create_object_directory $(EXE_2)
-	@echo -e "\e[32mPart 2 Compile Finish\e[39m"
+	@echod Part 2 Compile Finish
 
 create_object_directory:
 	mkdir -p $(OBJ_DIR)/linux $(OBJ_DIR)/windows

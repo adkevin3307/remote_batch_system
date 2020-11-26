@@ -10,10 +10,12 @@ using namespace std;
 class Server {
 private:
     shared_ptr<boost::asio::io_context> _io_context;
-    boost::asio::signal_set _signal;
     boost::asio::ip::tcp::acceptor _acceptor;
     boost::asio::ip::tcp::socket _socket;
     vector<shared_ptr<ServerSession>> sessions;
+#ifndef WINDOWS
+    boost::asio::signal_set _signal;
+#endif
 
     void do_wait();
     void do_accept();
