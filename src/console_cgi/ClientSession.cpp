@@ -1,5 +1,9 @@
 #include "console_cgi/ClientSession.h"
 
+#ifdef WINDOWS
+#include <iostream>
+#endif
+
 #include <boost/filesystem.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -86,7 +90,11 @@ void ClientSession::do_read()
         }
         else if (error_code != boost::asio::error::eof && error_code != boost::asio::error::operation_aborted) {
             string error_message = "Client read error: " + error_code.message() + '\n';
+#ifdef WINDOWS
+            cerr << error_message;
+#else
             MessageHandler::output(this->id, error_message, CONSTANT::OUTPUT_TYPE::STDERR);
+#endif
         }
     });
 }
