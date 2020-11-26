@@ -97,19 +97,22 @@ void ServerSession::handle_request()
     this->_socket.async_send(handle_buffer, [this, self, exec_file](boost::system::error_code error_code, size_t bytes) {
         if (!error_code) {
 #ifdef WINDOWS
-            int old_stdin = dup(STDIN_FILENO);
-            int old_stdout = dup(STDOUT_FILENO);
-            int old_stderr = dup(STDERR_FILENO);
-
-            int socket_fd = this->_socket.native_handle();
-            dup2(socket_fd, STDIN_FILENO);
-            dup2(socket_fd, STDOUT_FILENO);
-            dup2(socket_fd, STDERR_FILENO);
-
-            this->_socket.close();
-
             if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/panel.cgi") {
                 Panel panel;
+
+                string response = panel.html_response();
+                this->_socket.async_send(boost::asio::buffer(response, response.length()), [](boost::system::error_code error_code, size_t bytes) {
+                    if (error_code) {
+                        cerr << error_code.message() << '\n';
+                    }
+                });
+
+                string context = panel.html_template();
+                this->_socket.async_send(boost::asio::buffer(context, context.length()), [](boost::system::error_code error_code, size_t bytes) {
+                    if (error_code) {
+                        cerr << error_code.message() << '\n';
+                    }
+                });
             }
             else if (this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI] == "/console.cgi") {
                 try {
@@ -123,14 +126,6 @@ void ServerSession::handle_request()
                     cerr << "Console cgi exception: " << error.what() << '\n';
                 }
             }
-
-            dup2(old_stdin, STDIN_FILENO);
-            dup2(old_stdout, STDOUT_FILENO);
-            dup2(old_stderr, STDERR_FILENO);
-
-            close(old_stdin);
-            close(old_stdout);
-            close(old_stderr);
 #else
             setenv("REQUEST_METHOD", this->header[CONSTANT::REQUEST_HEADER::REQUEST_METHOD].c_str(), 1);
             setenv("REQUEST_URI", this->header[CONSTANT::REQUEST_HEADER::REQUEST_URI].c_str(), 1);
