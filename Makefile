@@ -21,7 +21,7 @@ part1: create_object_directory $(EXE_1)
 	@echo Part 1 Compile Finish
 
 part2: create_object_directory $(EXE_2)
-	@echod Part 2 Compile Finish
+	@echo Part 2 Compile Finish
 
 create_object_directory:
 	mkdir -p $(OBJ_DIR)/linux $(OBJ_DIR)/windows
