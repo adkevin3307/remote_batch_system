@@ -12,9 +12,10 @@ private:
     vector<string> hosts;
     vector<string> testcases;
 
-    void html_template();
-
 public:
     Panel(int servers = 5, int host_amount = 12, string testcase_path = "test_case", string domain = "cs.nctu.edu.tw");
     ~Panel();
+
+    string html_response();
+    string html_template();
 };

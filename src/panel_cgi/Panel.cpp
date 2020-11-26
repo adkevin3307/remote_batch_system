@@ -32,21 +32,23 @@ Panel::Panel(int servers, int host_amount, string testcase_path, string domain)
 
         sort(this->testcases.begin(), this->testcases.end());
     }
-
-    this->html_template();
 }
 
 Panel::~Panel()
 {
 }
 
-void Panel::html_template()
+string Panel::html_response()
 {
-    cout << "Content-type: text/html\r\n\r\n";
-    fflush(stdout);
+    string s = "Content-type: text/html\r\n\r\n";
 
+    return s;
+}
+
+string Panel::html_template()
+{
     string s;
-    stringstream ss;
+    stringstream ss, result;
     ss << CONSTANT::PANEL_HTML;
 
     while (getline(ss, s)) {
@@ -54,51 +56,51 @@ void Panel::html_template()
 
         if (s == "CONTENT") {
             for (auto i = 0; i < this->servers; i++) {
-                cout << "<tr>";
+                result << "<tr>";
 
-                cout << "<th scope='row' class='align-middle'>Session " << to_string(i + 1) << "</th>";
+                result << "<th scope='row' class='align-middle'>Session " << to_string(i + 1) << "</th>";
 
-                cout << "<td>";
+                result << "<td>";
 
-                cout << "<div class='input-group'>";
-                cout << "<select name='h" << to_string(i) << "' class='custom-select'>";
-                cout << "<option></option>";
+                result << "<div class='input-group'>";
+                result << "<select name='h" << to_string(i) << "' class='custom-select'>";
+                result << "<option></option>";
 
                 for (auto host : this->hosts) {
-                    cout << "<option value='" << host << "." << this->domain << "'>" << host << "</option>";
+                    result << "<option value='" << host << "." << this->domain << "'>" << host << "</option>";
                 }
 
-                cout << "</select>";
+                result << "</select>";
 
-                cout << "<div class='input-group-append'>";
-                cout << "<span class='input-group-text'>.cs.nctu.edu.tw</span>";
-                cout << "</div>";
+                result << "<div class='input-group-append'>";
+                result << "<span class='input-group-text'>.cs.nctu.edu.tw</span>";
+                result << "</div>";
 
-                cout << "</div>";
+                result << "</div>";
 
-                cout << "</td>";
+                result << "</td>";
 
-                cout << "<td>" << "<input name='p" << to_string(i) << "' type='text' class='form-control' size='5'>" << "</td>";
+                result << "<td>" << "<input name='p" << to_string(i) << "' type='text' class='form-control' size='5'>" << "</td>";
 
-                cout << "<td>";
-                cout << "<select name='f" << to_string(i) << "' class='custom-select'>";
+                result << "<td>";
+                result << "<select name='f" << to_string(i) << "' class='custom-select'>";
 
-                cout << "<option></option>";
+                result << "<option></option>";
                 for (auto testcase : this->testcases) {
-                    cout << "<option value='" << testcase << "'>" << testcase << "</option>";
+                    result << "<option value='" << testcase << "'>" << testcase << "</option>";
                 }
 
-                cout << "</select>";
+                result << "</select>";
 
-                cout << "</td>";
+                result << "</td>";
 
-                cout << "</tr>";
+                result << "</tr>";
             }
         }
         else {
-            cout << s << '\n';
+            result << s << '\n';
         }
     }
 
-    fflush(stdout);
+    return result.str();
 }
