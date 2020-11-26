@@ -53,8 +53,9 @@ void MessageHandler::output(string id, string s, CONSTANT::OUTPUT_TYPE type)
             break;
     }
 
-#ifdef WINDOWS
     string buffer = ss.str();
+
+#ifdef WINDOWS
     auto handle_buffer = boost::asio::buffer(buffer, buffer.length());
     boost::asio::async_write(*(MessageHandler::_socket), handle_buffer, [](boost::system::error_code error_code, size_t bytes) {
         if (error_code) {
@@ -62,7 +63,7 @@ void MessageHandler::output(string id, string s, CONSTANT::OUTPUT_TYPE type)
         }
     });
 #else
-    cout << buffer.str();
+    cout << buffer;
     fflush(stdout);
 #endif
 }

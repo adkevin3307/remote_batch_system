@@ -24,7 +24,7 @@ ClientSession::ClientSession(shared_ptr<boost::asio::io_context> io_context, int
     this->_buffer.resize(CONSTANT::MAX_BUFFER_SIZE);
 
     fstream file;
-    file.open("test_cast" + this->filename, ios::in);
+    file.open("test_case/" + this->filename, ios::in);
 
     string line;
     while (getline(file, line)) {
