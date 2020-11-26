@@ -2,38 +2,47 @@ EXE_1 = http_server console.cgi
 EXE_2 = cgi_server.exe
 OBJ_DIR = obj
 
-SOURCES = $(wildcard src/*.cpp) $(wildcard src/*/*.cpp)
+SOURCES = $(wildcard src/*/*.cpp)
 
-OBJS = $(addprefix $(OBJ_DIR)/, $(addsuffix .o, $(basename $(SOURCES:src/%=%))))
-OBJS_HTTP_SERVER = $(filter $(OBJ_DIR)/http_server/%.o, $(OBJS))
-OBJS_CONSOLE_CGI = $(filter $(OBJ_DIR)/console_cgi/%.o, $(OBJS))
-OBJS_CGI_SERVER = $(filter-out $(OBJ_DIR)/console_cgi/console_cgi.o $(OBJ_DIR)/http_server/http_server.o, $(OBJS))
+OBJS = $(addsuffix .o, $(basename $(SOURCES:src/%=%)))
+
+OBJS_HTTP_SERVER = $(addprefix $(OBJ_DIR)/linux/, $(notdir $(filter http_server/%.o, $(OBJS))))
+OBJS_CONSOLE_CGI = $(addprefix $(OBJ_DIR)/linux/, $(notdir $(filter console_cgi/%.o, $(OBJS))))
+OBJS_CGI_SERVER = $(addprefix $(OBJ_DIR)/windows/, $(filter-out console_cgi.o http_server.o, $(notdir $(OBJS))))
 
 CXXFLAGS = -std=c++17 -I./include -Wall -O2
 
 LIBS = -lpthread -lboost_system -lboost_filesystem
 
-ifeq ($(MAKECMDGOALS), part2)
-	CXXFLAGS += -DWINDOWS
-endif
-
 all: part1 part2
-	@echo Compile Success
+	@echo -e "Compile Success"
 
 part1: create_object_directory $(EXE_1)
-	@echo Compile Part 1
+	@echo -e "\e[32mPart 1 Compile Finish\e[39m"
 
 part2: create_object_directory $(EXE_2)
-	@echo Compile Part 2
+	@echo -e "\e[32mPart 2 Compile Finish\e[39m"
 
 create_object_directory:
-	mkdir -p $(OBJ_DIR)/http_server $(OBJ_DIR)/console_cgi $(OBJ_DIR)/cgi_server $(OBJ_DIR)/panel_cgi
+	mkdir -p $(OBJ_DIR)/linux $(OBJ_DIR)/windows
 
-$(OBJ_DIR)/%.o: src/%.cpp
+$(OBJ_DIR)/linux/%.o: src/http_server/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 
-$(OBJ_DIR)/%/%.o: src/%/%.cpp
+$(OBJ_DIR)/linux/%.o: src/console_cgi/%.cpp
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+$(OBJ_DIR)/windows/%.o: src/http_server/%.cpp
+	$(CXX) $(CXXFLAGS) -DWINDOWS -c -o $@ $<
+
+$(OBJ_DIR)/windows/%.o: src/console_cgi/%.cpp
+	$(CXX) $(CXXFLAGS) -DWINDOWS -c -o $@ $<
+
+$(OBJ_DIR)/windows/%.o: src/panel_cgi/%.cpp
+	$(CXX) $(CXXFLAGS) -DWINDOWS -c -o $@ $<
+
+$(OBJ_DIR)/windows/%.o: src/cgi_server/%.cpp
+	$(CXX) $(CXXFLAGS) -DWINDOWS -c -o $@ $<
 
 http_server: $(OBJS_HTTP_SERVER)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LIBS)

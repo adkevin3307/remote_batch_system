@@ -9,7 +9,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
     if (argc != 2) {
-        cerr << "Usage: ./http_server {port}" << '\n';
+        cerr << "Usage: ./cgi_server.exe {port}" << '\n';
 
         return 0;
     }
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
         io_context->run();
     }
     catch (exception& error) {
-        cerr << "Http server exception: " << error.what() << '\n';
+        cerr << "Cgi server exception: " << error.what() << '\n';
     }
 
     return 0;
