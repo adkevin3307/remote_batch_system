@@ -180,8 +180,14 @@ void ServerSession::handle_request()
                 this->_socket.close();
 
                 if (execlp(exec_file.c_str(), exec_file.c_str(), NULL) < 0) {
+                    cout << "Content-type: text/html\r\n\r\n";
+                    fflush(stdout);
+
                     cout << "<h1>Execution Failed</h1>\r\n";
+                    fflush(stdout);
                 }
+
+                exit(EXIT_SUCCESS);
             }
             else {
                 this->_io_context->notify_fork(boost::asio::io_context::fork_parent);
